@@ -1,0 +1,375 @@
+package edu.cunoc.Nucleo;
+
+import java_cup.runtime.*;
+import java_cup.runtime.XMLElement;
+import edu.cunoc.Enlace.*;
+import java.util.*;
+import edu.cunoc.Sitios.*;
+
+parser code {:
+
+    private Respuesta respuesta;
+
+    public CreadorWebParser(CreadorWebLexer lex){
+        super(lex);
+        this.respuesta = new Respuesta();
+    }
+
+    private Nucleo nucleo = new Nucleo();
+
+    public Nucleo getNucleo(){
+        return nucleo;
+    }
+
+    public Respuesta getRespuesta(){
+        return respuesta;
+    }
+
+    public void syntax_error(Symbol cur_token) {
+            System.out.println("Simbolo con error:" + symbl_name_from_id(cur_token.sym)+". ");
+                        System.out.println("Linea " + cur_token.left+" Columna: " + cur_token.right+". ");
+                        String posibleLex = "";
+                        if (cur_token.value != null){
+                            System.out.println("Lexema: "+cur_token.value);
+                            posibleLex = "Lexema: "+(String) cur_token.value;
+                        }
+                        respuesta.addErrorSintactico("Error sintactico al encontrar el simbolo:" + symbl_name_from_id(cur_token.sym)+"Linea " +
+                                cur_token.left+", Columna " + cur_token.right+posibleLex);
+                        if (expected_token_ids().isEmpty()) {
+                            System.out.println("ya no se esperaba ningun simbolo");
+                        } else {
+                        List<Integer> ids = this.expected_token_ids();
+                                LinkedList<String> list = new LinkedList();
+                                Iterator var3 = ids.iterator();
+
+                                while(var3.hasNext()) {
+                                    Integer expected = (Integer)var3.next();
+                                    list.add(this.symbl_name_from_id(expected));
+                                }
+                                          respuesta.addErrorSintactico("Se esperaba uno de los tokens:" + list.toString());
+                                                                        report_expected_token_ids();
+                                                                    }
+                    }
+
+:}
+
+/* Terminales */
+
+    terminal            NUEVA_PAG, NUEVA_WEB,DEL_WEB,DEL_PAG,MOD_PAG,ADD_COMP, DEL_COMP,MOD_COMP, PAR_ID,USER_CREACION,
+                        DATE_CREACION, DATE_MOD, USER_MOD, TITULO, SITIO, PADRE, PAGINA, CLASE, TEXTO, ALINEACION, COLOR,
+                        ORIGEN, ALTURA, ANCHO, CENTRAR, IZQUIERDA, DERECHA, JUSTIFICAR, MENOSQUE, MAYORQUE,
+                        IGUAL ,DIAGONAL ,COR_OP, COR_CLO, ACCION, NOMBRE, ATRIBUTOS, ATRIBUTO, PARAMETROS, PARAMETRO,
+                        ETIQUETAS_XML, ETIQUETA, ACCIONES, COMILLA, MENU, PARRAFO, IMAGEN, VIDEO, BARRA, VALOR, TITULO_CLASS;
+    terminal String     HEXA, ID, OTRO;
+    terminal Integer    ENTERO;
+    terminal String       FECHA;
+
+/* No Terminales */
+
+    nonterminal Nucleo              script, scriptAccion;
+    nonterminal ArrayList<Accion>   acciones, accList;
+    nonterminal Accion              accion, posAccion, crearWeb, eliminarWeb, crearPagina,eliminarPagina,modificarPagina,
+                                    agregarComp, eliminarComp, modificarComp, paraCrearWeb, paraUsuPos, paraUsuFecha,
+                                    paraFechaUsu, paraFechaMod, paraUserMod, prevenParaUsuFecha, paraPrevenUsuFecha, paraCrearPagina,
+                                    paraUnionPagina;
+    nonterminal String              idPar, fechaMod, fechaCr, userAuth, userMod, idGet, fechaGet, stringGet, titlePar,
+                                    sitioPar, padrePar, etiqueta, idPagina, origenAt,textoAt, colorAt, padreAt, hexGet,
+                                    paraModificarPagina, otro;
+    nonterminal ArrayList<String>   etiquetas, etiList, etiquetasComp, etiCompList;
+    nonterminal Integer             intGet, altuAt, anchoAt;
+    nonterminal Componente           atributos, imagenComp, videoComp, tituloComp, parrafoComp, menuComp,paraImagenComp,
+                                    paraParrTitulo, alineColor, tipoAtributos, paraMenu, padrEti;
+    nonterminal Alineacion          alineAt, aliGet;
+    nonterminal                     accTop, accBot, parasTop, parasBot, paraTop, paraBot, etiTop, etiBot, atriTop,
+                                    atrisTop, atriBot, atrisBot, accionesLine;
+
+/* Gramatica */
+
+    start with script;
+
+    script ::= MENOSQUE scriptAccion                           {: RESULT = nucleo; :}
+                ;
+
+    scriptAccion ::= acciones:p                             {: nucleo.setAcciones(p); RESULT = nucleo; :}
+                  | accion:a                            {: nucleo.addAccion(a); RESULT = nucleo; :}
+                  ;
+
+    acciones ::= accionesLine MENOSQUE accion:p MENOSQUE accList:a             {: a.add(p);RESULT = a; :}
+                ;
+
+    accList ::= accion:a MENOSQUE accList:o                  {: o.add(a); RESULT = o; :}
+                | accionesLine                                  {: RESULT = new ArrayList<Accion>();:}
+                ;
+
+    accion ::=   ACCION NOMBRE IGUAL COMILLA posAccion:a     {: RESULT = a; :}
+                ;
+
+    posAccion ::= crearWeb:a accBot                   {: RESULT = a; :}
+                |  eliminarWeb:a accBot                {: RESULT = a; :}
+                 | crearPagina:a                 {: RESULT = a; :}
+                 | eliminarPagina:a  accBot            {: RESULT = a; :}
+                 | modificarPagina:a             {: RESULT = a; :}
+                 | agregarComp:a accBot                {: RESULT = a; :}
+                 | eliminarComp:a      accBot          {: RESULT = a; :}
+                 | modificarComp:a           accBot    {: RESULT = a; :}
+                 | error parasBot
+                  ;
+
+    crearWeb ::= NUEVA_WEB COMILLA MAYORQUE parasTop idPar:s paraCrearWeb:p   {: p.setTipoAccion(TipoAccion.CREAR_WEB);  p.addParametro("id",s); RESULT = p; :}
+                                ;
+
+    paraCrearWeb ::= paraTop  paraUsuPos:f                                               {: RESULT = f; :}
+                    | parasBot                                                                   {: RESULT = new Accion();:}
+                    ;
+
+    paraUsuPos ::= prevenParaUsuFecha:p                 {:  RESULT = p; :}
+                 | paraFechaUsu:p                       {:  RESULT = p; :}
+                 | paraFechaMod:p                       {:  RESULT = p; :}
+                 | paraUserMod:p                        {:  RESULT = p; :}
+                 |  error parasBot                      {:  RESULT = new Accion(); :}
+                 ;
+
+    prevenParaUsuFecha ::= userAuth:u paraPrevenUsuFecha:p                                              {: p.addParametro("userAuth",u);RESULT = p; :}
+                       ;
+
+    paraPrevenUsuFecha::=  paraTop paraUsuFecha:p                                                {: RESULT = p; :}
+                        |  parasBot                                                             {: Accion a = new Accion(); RESULT = a; :}
+                        ;
+
+    paraUsuFecha ::=   paraFechaUsu:p                                             {:  RESULT = p; :}
+                    |  paraFechaMod:p                                             {:  RESULT = p; :}
+                    |  paraUserMod:p                                              {:  RESULT = p; :}
+                    ;
+
+    paraFechaUsu ::=  fechaCr:u paraTop paraFechaMod:p                                               {: p.addParametro("fechaCr",u); RESULT = p; :}
+                   |  fechaCr:u paraTop paraUserMod:p                                                {: p.addParametro("fechaCr",u); RESULT = p; :}
+                   | fechaCr:u parasBot                                                                     {: Accion a = new Accion(); a.addParametro("fechaCr",u); RESULT = a; :}
+                   ;
+
+    paraFechaMod ::=  fechaMod:u paraTop paraUserMod:p                                               {: p.addParametro("fechaMod",u); RESULT = p; :}
+                  | fechaMod:u parasBot                                                                  {: Accion a = new Accion(); a.addParametro("fechaMod",u); RESULT = a; :}
+                  ;
+
+    paraUserMod ::= userMod:p parasBot                                                    {: Accion a = new Accion(); a.addParametro("userMod",p); RESULT = a; :}
+                 ;
+
+    eliminarWeb ::= DEL_WEB COMILLA MAYORQUE parasTop idPar:s  parasBot     {: Accion a = new Accion(TipoAccion.ELIMINAR_WEB); a.addParametro("id",s); RESULT = a;:}
+                    ;
+
+    crearPagina ::= NUEVA_PAG COMILLA MAYORQUE parasTop idPar:i paraTop paraCrearPagina:a etiquetas:e {: a.addParametro("id",i); a.setetiquetasList(e); a.setTipoAccion(TipoAccion.CREAR_PAGINA) ;RESULT = a;  :}
+                    ;
+
+    paraCrearPagina ::= titlePar:t paraTop sitioPar:s padrePar:p paraUnionPagina:a              {: a.addParametro("titlePar",t); a.addParametro("sitioPar",s); a.addParametro("padrePar",p); RESULT = a; :}
+                    | sitioPar:s padrePar:p paraUnionPagina:a                           {: a.addParametro("sitioPar",s); a.addParametro("padrePar",p); RESULT = a; :}
+                    ;
+
+    paraUnionPagina ::=  paraTop paraUsuPos:p                                                   {: RESULT = p; :}
+                    | parasBot                                                           {: RESULT = new Accion(); :}
+                    ;
+
+    eliminarPagina ::= DEL_PAG COMILLA MAYORQUE parasTop idPar:i parasBot{: Accion a =  new Accion(TipoAccion.ELIMINAR_PAGINA);  a.addParametro("id",i); RESULT = a;:}
+                    ;
+
+    modificarPagina ::= MOD_PAG COMILLA MAYORQUE parasTop idPar:i paraModificarPagina:t etiquetas:e {: Accion a =  new Accion(TipoAccion.MODIFICAR_PAGINA);
+                                a.addParametro("id",i); a.addParametro("titlePar",t); a.setetiquetasList(e); RESULT = a; :}
+                    ;
+
+    paraModificarPagina ::= paraTop titlePar:t parasBot                           {: RESULT = t; :}
+                        | parasBot                                                {: RESULT = null; :}
+                        ;
+
+    agregarComp ::= ADD_COMP COMILLA MAYORQUE parasTop idPar:i idPagina:p  atributos:t {: Accion a = new Accion(TipoAccion.AGREGAR_COMP);
+                    a.addParametro("id",i); a.setAtributos(t); RESULT = a; :}
+                    ;
+
+    eliminarComp ::= DEL_COMP COMILLA MAYORQUE parasTop idPar:i idPagina:p {: Accion a = new Accion(TipoAccion.ELIMINAR_COMP); a.addParametro("id",i); a.addParametro("pagina",p); RESULT = a;:}
+                    ;
+
+    modificarComp ::= MOD_COMP COMILLA MAYORQUE parasTop idPar:i idPagina:p  atributos:t {: Accion a = new Accion(TipoAccion.MODIFICAR_COMP);
+                                                                                       a.addParametro("id",i); a.setAtributos(t); RESULT = a; :}
+                   ;
+
+    atributos ::= paraTop CLASE COMILLA MAYORQUE COR_OP tipoAtributos:t {: RESULT = t; :}
+                ;
+
+    tipoAtributos ::= imagenComp:i                          {: RESULT = i; :}
+                    | videoComp:v                           {: RESULT = v; :}
+                    | tituloComp:t                          {: RESULT = t; :}
+                    | parrafoComp:p                         {: RESULT = p; :}
+                    | menuComp:m                            {: RESULT = m; :}
+                    | error atrisBot
+                    ;
+
+    imagenComp ::= IMAGEN atrisTop origenAt:o atriTop paraImagenComp:p atrisBot {: p.setTipo(TipoComp.IMAGEN);
+                p.setImagen(o); RESULT = p;:}
+                ;
+
+    paraImagenComp ::= alineAt:t atriTop altuAt:a anchoAt:c                 {: Componente d = new Componente(); d.setHeight(a); d.setWidth(c); d.setAlineacion(t); RESULT = d; :}
+                    |   altuAt:a anchoAt:c                          {: Componente d = new Componente(); d.setHeight(a); d.setWidth(c); RESULT = d; :}
+                    ;
+
+    videoComp ::= VIDEO atrisTop origenAt:o altuAt:a anchoAt:c atrisBot {: Componente d = new Componente(TipoComp.VIDEO);
+                d.setVideo(o); d.setHeight(a); d.setWidth(c); RESULT = d;:}
+                ;
+
+    parrafoComp ::= PARRAFO atrisTop textoAt:t paraParrTitulo:p {: p.setTipo(TipoComp.PARRAFO); p.setTexto(t); RESULT = p;:}
+                ;
+
+    tituloComp ::= TITULO_CLASS atrisTop textoAt:t paraParrTitulo:p {: p.setTipo(TipoComp.TITULO); p.setTexto(t); RESULT = p;:}
+                ;
+
+    paraParrTitulo ::= atriTop alineColor:a                     {: RESULT = a; :}
+                    | atrisBot                                 {: RESULT = new Componente(); :}
+                    ;
+
+    alineColor ::= alineAt:a atriTop colorAt:c atrisBot         {: Componente d = new Componente(); d.setColor(c); d.setAlineacion(a); RESULT = d;:}
+                | colorAt:c atrisBot                            {: Componente d = new Componente(); d.setColor(c); RESULT = d;:}
+                | alineAt:a atrisBot                            {: Componente d = new Componente(); d.setAlineacion(a); RESULT = d;:}
+                ;
+
+    menuComp ::= MENU atrisTop atriTop paraMenu:p atrisBot {: RESULT = p;:}
+                ;
+
+    paraMenu ::= padreAt:p padrEti:d                        {: d.setPadre(p); RESULT = d;:}
+               | etiquetasComp:e atrisBot                   {: Componente d = new Componente(TipoComp.MENU); d.setEtiquetas(e); RESULT = d;:}
+              ;
+
+    padrEti ::= atriTop etiquetasComp:e atrisBot             {: Componente d = new Componente(TipoComp.MENU); d.setEtiquetas(e); RESULT = d;:}
+            | atrisBot                                       {: RESULT = new Componente(TipoComp.MENU); :}
+            ;
+
+    origenAt ::= atriTop ORIGEN COMILLA MAYORQUE stringGet:i atriBot {: RESULT = i; :}
+                ;
+
+    alineAt ::=  ALINEACION COMILLA MAYORQUE aliGet:i atriBot {: RESULT = i; :}
+               ;
+
+    altuAt ::= ALTURA COMILLA MAYORQUE intGet:i atriBot {: RESULT = i; :}
+            ;
+
+    anchoAt ::= atriTop ANCHO COMILLA MAYORQUE intGet:i atriBot {: RESULT = i; :}
+            ;
+
+    colorAt ::=  COLOR COMILLA MAYORQUE hexGet:i atriBot {: RESULT = i; :}
+            ;
+
+    padreAt ::=  PADRE COMILLA MAYORQUE idGet:i atriBot {: RESULT = i; :}
+           ;
+
+    textoAt ::= atriTop TEXTO COMILLA MAYORQUE stringGet:i atriBot {: RESULT = i; :}
+            ;
+
+    etiquetasComp ::=  ETIQUETAS_XML MAYORQUE COR_OP etiCompList:i COR_CLO atriBot  {: RESULT = i; :}
+            ;
+
+    idPar ::= paraTop PAR_ID COMILLA MAYORQUE idGet:i paraBot {: RESULT = i; :}
+            ;
+
+    userAuth ::= USER_CREACION COMILLA MAYORQUE  stringGet:i paraBot {: RESULT = i; :}
+            ;
+
+    fechaCr ::=  DATE_CREACION COMILLA MAYORQUE fechaGet:i paraBot {: RESULT = i; :}
+            ;
+
+    fechaMod ::=  DATE_MOD  COMILLA MAYORQUE fechaGet:i paraBot {: RESULT = i; :}
+                ;
+
+    userMod ::=  USER_MOD COMILLA MAYORQUE stringGet:i paraBot {: RESULT = i; :}
+                ;
+
+    titlePar ::=  TITULO_CLASS COMILLA MAYORQUE stringGet:i paraBot {: RESULT = i; :}
+                ;
+
+    sitioPar ::=  SITIO COMILLA MAYORQUE idGet:i paraBot  {: RESULT = i; :}
+                ;
+
+    padrePar ::= paraTop PADRE COMILLA MAYORQUE idGet:i paraBot  {: RESULT = i; :}
+                ;
+
+    idPagina ::= paraTop PAGINA COMILLA MAYORQUE idGet:i paraBot  {: RESULT = i; :}
+                ;
+
+    etiquetas ::= etiTop etiqueta:t etiList:e                         {: e.add(t); RESULT = e; :}
+                | accBot                                              {: RESULT = null; :}
+                ;
+
+    etiList ::=  etiqueta:t etiList:e                                {: e.add(t); RESULT = e; :}
+                | etiBot accBot                                                 {: RESULT = new ArrayList<String>(); :}
+                ;
+
+    etiqueta ::= MENOSQUE ETIQUETA VALOR IGUAL COMILLA otro:i COMILLA DIAGONAL MAYORQUE  {: RESULT = i; :}
+                ;
+
+    etiTop ::= MENOSQUE ETIQUETAS_XML MAYORQUE;
+
+    etiBot ::= MENOSQUE DIAGONAL ETIQUETAS_XML MAYORQUE;
+
+    parasTop ::= MENOSQUE PARAMETROS MAYORQUE;
+
+    parasBot ::= MENOSQUE DIAGONAL PARAMETROS MAYORQUE;
+
+    paraTop ::= MENOSQUE PARAMETRO NOMBRE IGUAL COMILLA;
+
+    paraBot ::= MENOSQUE DIAGONAL PARAMETRO MAYORQUE;
+
+    accionesLine ::= ACCIONES MAYORQUE;
+
+    accTop ::= MENOSQUE ACCION MAYORQUE;
+
+    accBot ::= MENOSQUE DIAGONAL ACCION MAYORQUE;
+
+    atrisTop ::= COR_CLO paraBot parasBot MENOSQUE ATRIBUTOS MAYORQUE;
+
+    atriTop ::= MENOSQUE ATRIBUTO NOMBRE IGUAL COMILLA;
+
+    atriBot ::= MENOSQUE DIAGONAL ATRIBUTO MAYORQUE;
+
+    atrisBot ::= MENOSQUE DIAGONAL ATRIBUTOS MAYORQUE;
+
+    idGet ::= COR_OP ID:i COR_CLO                   {: RESULT = i; :}
+            ;
+
+    fechaGet ::= COR_OP FECHA:i COR_CLO                   {: RESULT = i; :}
+             ;
+
+    stringGet ::=  COR_OP otro:i COR_CLO                                   {: RESULT = i; :}
+                 ;
+
+    intGet ::= COR_OP ENTERO:i COR_CLO                      {: RESULT = i; :}
+            ;
+
+    hexGet ::=  COR_OP HEXA:i COR_CLO                      {: RESULT = i; :}
+             ;
+
+    aliGet ::= COR_OP CENTRAR COR_CLO                             {: RESULT = Alineacion.CENTRO ;:}
+            | COR_OP DERECHA COR_CLO                              {: RESULT = Alineacion.DERECHA; :}
+            | COR_OP IZQUIERDA COR_CLO                            {: RESULT = Alineacion.IZQUIERDA; :}
+            | COR_OP JUSTIFICAR COR_CLO                           {: RESULT = Alineacion.JUSTIFICADA; :}
+            ;
+
+    etiCompList ::= ID:i BARRA etiCompList:e                       {: e.add(i); RESULT = e; :}
+                | ID:i                                             {: ArrayList<String> e = new ArrayList<String>();
+                                                                                            e.add(i); RESULT = e; :}
+                ;
+
+    otro ::= ID:i                                    {: RESULT = i; :}
+           | FECHA:i                                 {: RESULT = i; :}
+           | ENTERO:i                                   {: RESULT = String.valueOf(i); :}
+           | HEXA:i                                   {: RESULT = i; :}
+           | OTRO:i                                 {: RESULT = i; :}
+           | ACCION                                      {: RESULT = "ACCION"; :}
+           | ACCIONES                                    {: RESULT = "ACCIONES"; :}
+           | NOMBRE                                        {: RESULT = "NOMBRE"; :}
+           | ATRIBUTOS                                      {: RESULT = "ATRIBUTOS"; :}
+           | ATRIBUTO                                       {: RESULT = "ATRIBUTO"; :}
+           | PARAMETROS                                 {: RESULT = "PARAMETROS"; :}
+           | PARAMETRO                                  {: RESULT = "PARAMETRO"; :}
+           | ETIQUETAS_XML                              {: RESULT = "ETIQUETAS_XML"; :}
+           | ETIQUETA                                   {: RESULT = "ETIQUETA"; :}
+           |IMAGEN                                      {: RESULT = "IMAGEN"; :}
+           |VIDEO                                   {: RESULT = "VIDEO"; :}
+           | PARRAFO                                    {: RESULT = "PARRAFO"; :}
+           | TITULO_CLASS                                   {: RESULT = "TITULO_CLASS"; :}
+           |MENU                                        {: RESULT = "MENU"; :}
+           ;
+

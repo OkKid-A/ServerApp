@@ -1,0 +1,115 @@
+package edu.cunoc.Reportes;
+
+import java_cup.runtime.*;
+import java_cup.runtime.XMLElement;
+import edu.cunoc.Enlace.*;
+import java.util.ArrayList;
+
+parser code {:
+
+    private Respuesta respuesta;
+
+    public CreadorWebParser(CreadorWebLexer lex){
+        super(lex);
+        this.respuesta = new Respuesta();
+    }
+
+    private Reportes reportes = new Reportes();
+
+    public Reportes getReportes(){
+        return reportes;
+    }
+
+    public Respuesta getRespuesta(){
+        return respuesta;
+    }
+
+    public void syntax_error(Symbol cur_token) {
+            System.out.println("Simbolo con error:" + symbl_name_from_id(cur_token.sym));
+                        System.out.println("Linea " + cur_token.left+" Columna " + cur_token.right);
+                        String posibleLex = "";
+                        if (cur_token.value != null){
+                            System.out.println("Lexema: "+cur_token.value);
+                            posibleLex = "Lexema: "+(String) cur_token.value;
+                        }
+                        respuesta.addErrorSintactico("Error sintactico al encontrar el simbolo:" + symbl_name_from_id(cur_token.sym)+"\nLinea " +
+                                cur_token.left+", Columna \n" + cur_token.right+posibleLex);
+                        if (expected_token_ids().isEmpty()) {
+                            System.out.println("ya no se esperaba ningun simbolo");
+                        } else {
+                        List<Integer> ids = this.expected_token_ids();
+                                LinkedList<String> list = new LinkedList();
+                                Iterator var3 = ids.iterator();
+
+                                while(var3.hasNext()) {
+                                    Integer expected = (Integer)var3.next();
+                                    list.add(this.symbl_name_from_id(expected));
+                                }
+                                          respuesta.addErrorSintactico("Se esperaba uno de los tokens:" + list.toString());
+                                                                        report_expected_token_ids();
+                                                                    }
+                    }
+    }
+:}
+
+/* Terminales */
+
+terminal            CONSULTAR, VIS_SITIO, VIS_PAGINA, PAG_POPULAR, COMP, IMAGEN, VIDEO, TITULO, MENU, PARRAFO, TODOS,
+                    PUNTO, COMILLA, PC, COMA;
+terminal String     ID, tipoCopm;
+
+/* No terminales */
+
+//nonterminal ArrayList<ArrayList<String>>    path_list, list_Param;
+nonterminal Reporte             script;
+nonterminal ArrayList<String>   path, path_file;
+nonterminal Query               visSitio, visPagina, popPagina, popComp, query;
+nonterminal ArrayList<Query>    queries;
+
+/* Gramatica */
+
+start with script;
+
+ script ::= queries:q                           {: reportes.setQueries(q); RESULT = q; :}
+        ;
+
+ queries ::= query:q PC queries:o               {: o.add(q); RESUlT = o; :}
+        |                                       {: RESULT =  new ArrayList<Query>(); :}
+        ;
+
+ query ::= visSitio:s                       {: RESULT = s; :}
+        | visPagina:p                       {: RESULT = p; :}
+        | popPagina:o                       {: RESULT = o; :}
+        | popComp:c                         {: RESULT = c; :}
+        ;
+
+ visSitio ::= CONSULTAR VIS_SITIO path_list:p           {: Query q = new Query(TipoQuery.VIS_SITIO); q.setPaths(p); RESULT = q;:}
+         ;
+
+ visPagina ::= CONSULTAR VIS_PAGINA path_list:p           {: Query q = new Query(TipoQuery.VIS_PAGINA); q.setPaths(p); RESULT = q;:}
+         ;
+
+ popPagina ::= CONSULTAR PAG_POPULAR path_list:p           {: Query q = new Query(TipoQuery.POP_PAGINA); q.setPaths(p); RESULT = q;:}
+         ;
+
+ popComp ::= CONSULTAR COMP tipoComp:c path_list:p           {: Query q = new Query(TipoQuery.POP_COMP); q.setTipoComp(c);q.setPaths(p); RESULT = q;:}
+         ;
+
+ tipoCopm ::= IMAGEN                        {: RESULT = "IMAGEN"; :}
+            | VIDEO                         {: RESULT = "VIDEO"; :}
+            | PARRAFO                       {: RESULT = "PARRAFO"; :}
+            | TITULO                        {: RESULT = "TITULO"; :}
+            | MENU                          {: RESULT = "MENU"; :}
+            ;
+
+ path_list ::= path:p COMA path_list:l          {: l.add(p); RESUlT = l; :}
+            | path:p                            {: ArrayList<ArrayList<String>> a = new ArrayList<ArrayList<String>>();
+                                                a.add(p); RESULT = a; :}
+            ;
+
+ path ::= COMILLA ID_ARCHIVO:i COMILLA path_file:p                 {: p.add(i); RESULT = p; :}
+        ;
+
+ path_file ::= PUNTO COMILLA ID_ARCHIVO:i COMILLA path_file:p      {: p.add(i); RESULT = p; :}
+           |                                       {:  RESULT = new ArrayList<String>(); :}
+           ;

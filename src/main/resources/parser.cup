@@ -1,0 +1,80 @@
+package edu.cunoc.Nucleo;
+
+import java_cup.runtime.*;
+import java_cup.runtime.XMLElement;
+import edu.cunoc.Enlace.*;
+import java.util.*;
+
+parser code {:
+
+    private Respuesta respuesta;
+
+    public CreadorWebParser(CreadorWebLexer lex){
+        super(lex);
+        this.respuesta = new Respuesta();
+    }
+
+    private Nucleo nucleo = new Nucleo();
+
+    public Nucleo getNucleo(){
+        return nucleo;
+    }
+
+    public void syntax_error(Symbol cur_token) {
+            System.out.println("Simbolo con error:" + symbl_name_from_id(cur_token.sym));
+                        System.out.println("Linea " + cur_token.left+" Columna " + cur_token.right);
+                        String posibleLex = "";
+                        if (cur_token.value != null){
+                            System.out.println("Lexema: "+cur_token.value);
+                            posibleLex = "Lexema: "+(String) cur_token.value;
+                        }
+                        respuesta.addErrorSintactico("Error sintactico al encontrar el simbolo:" + symbl_name_from_id(cur_token.sym)+"\nLinea " +
+                                cur_token.left+", Columna \n" + cur_token.right+posibleLex);
+                        if (expected_token_ids().isEmpty()) {
+                            System.out.println("ya no se esperaba ningun simbolo");
+                        } else {
+                        List<Integer> ids = this.expected_token_ids();
+                                LinkedList<String> list = new LinkedList();
+                                Iterator var3 = ids.iterator();
+
+                                while(var3.hasNext()) {
+                                    Integer expected = (Integer)var3.next();
+                                    list.add(this.symbl_name_from_id(expected));
+                                }
+                                          respuesta.addErrorSintactico("Se esperaba uno de los tokens:" + list.toString());
+                                                                        report_expected_token_ids();
+                                                                    }
+                    }
+    }
+:}
+
+/* Terminales */
+
+    terminal            NUEVA_PAG, NUEVA_WEB,DEL_WEB,DEL_PAG,MOD_PAG,ADD_COMP, DEL_COMP,MOD_COMP, PAR_ID,USER_CREACION,
+                        DATE_CREACION, DATE_MOD, USER_MOD, TITULO, SITIO, PADRE, PAGINA, CLASE, TEXTO, ALINEACION, COLOR,
+                        ORIGEN, ALTURA, ANCHO, ETIQUETAS_AT, CENTRAR, IZQUIERDA, DERECHA, JUSTIFICAR, MENOSQUE, MAYORQUE,
+                        IGUAL ,DIAGONAL ,COR_OP, COR_CLO, ACCION, NOMBRE, ATRIBUTOS, ATRIBUTO, PARAMETROS, PARAMETRO,
+                        ETIQUETAS_XML, ETIQUETA, ACCIONES, COMILLA, MENU, PARRAFO, IMAGEN, VIDEO, BARRA;
+    terminal String     HEXA, ID, OTRO;
+    terminal Integer    ENTERO;
+    terminal Date       FECHA;
+
+/* No Terminales */
+
+    nonterminal Nucleo              script;
+    nonterminal ArrayList<Accion>   acciones, accList;
+    nonterminal Accion              accion, posAccion, crearWeb, eliminarWeb, crearPagina,eliminarPagina,modificarPagina,
+                                    agregarComp, eliminarComp, modificarComp, paraCrearWeb, paraUsuPos, paraUsuFecha, paraFechaUsu, paraFechaMod, paraUserMod, prevenParaUsuFecha, paraPrevenUsuFecha;
+    nonterminal String              idPar, fechaMod, fechaCr, userAuth, userMod, idGet, fechaGet, stringGet, titlePar,
+                                    sitioPar, padrePar, etiqueta, idPagina, origenAt, altuAt, anchoAt, textoAt, colorAt, padreAt, hexGet;
+    nonterminal ArrayList<String>   etiquetas, etiList, etiquetasComp, etiCompList;
+    nonterminal Integer             intGet;
+    nonterminal Componente           atributos, imagenComp, videoComp, tituloComp, parrafoComp, menuComp;
+    nonterminal Alineacion          alineAt, aliGet;
+    nonterminal                     accTop, accBot, parasTop, parasBot, paraTop, paraBot, etiTop, etiBot, etiLine, atriTop,
+                                    atrisTop, atriBot, atrisBot;
+
+/* Gramatica */
+
+    start with script;
+

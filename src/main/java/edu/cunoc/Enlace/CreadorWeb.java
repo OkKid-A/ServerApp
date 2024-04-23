@@ -22,30 +22,26 @@ public class CreadorWeb {
         this.archivadorHtml = new ArchivadorHtml();
     }
 
-    public boolean buildHtml(DB db, Respuesta respuesta){
+    public DB buildHtml(DB db, Respuesta respuesta){
         boolean respuestaCorrecta = true;
         DB dbCopia = new DB(db);
         try {
         for (Map.Entry<String, Sitio> entry : db.getSitiosDB().entrySet()){
             Sitio sitio = entry.getValue();
             if (sitio.isModificado()){
-                try {
-                    buildSitio(dbCopia, sitio,respuesta);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    respuestaCorrecta = false;
-                }
+                buildSitio(dbCopia, sitio,respuesta);
             }
         }} catch (ConcurrentModificationException e){
             e.printStackTrace();
         }
         if (respuestaCorrecta){
-            db = dbCopia;
+            return dbCopia;
+        } else {
+            return db;
         }
-        return respuestaCorrecta;
     }
 
-    public boolean buildSitio(DB db, Sitio sitio, Respuesta respuesta) throws FileNotFoundException {
+    public boolean buildSitio(DB db, Sitio sitio, Respuesta respuesta)  {
         Manejador manejador = new Manejador();
         try {
             manejador.deleteSitio(db, sitio.getiD(), respuesta, true);
@@ -66,7 +62,7 @@ public class CreadorWeb {
         html += "<head>\n<title>"+pagina.getTitulo()+"</title>\n";
         html += "<body>\n";
         for (Componente componente : pagina.getComponentes()){
-            dibujarComponente(componente);
+            html += dibujarComponente(componente);
         }
         html += "</body>\n</html>";
         return html;

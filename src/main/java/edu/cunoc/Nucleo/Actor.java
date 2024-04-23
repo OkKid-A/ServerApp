@@ -80,7 +80,6 @@ public class Actor {
         sitio.setLastModUSer(atributos.getOrDefault("userMod",idUser));
         pagina.setLastMOdUser(atributos.getOrDefault("userMod",idUser));
         manejador.addSitio(db,sitio,respuesta);
-        respuesta.addExito("Sitio web: "+sitio.getiD() + " creado con exito.");
     }
 
     public void eliminarWeb(DB db, Accion accion, Respuesta respuesta) throws FileNotFoundException {
@@ -89,7 +88,6 @@ public class Actor {
             throw new FileNotFoundException();
         } else {
             manejador.deleteSitio(db,accion.getParametros().get("id"),respuesta);
-            respuesta.addExito("Sitio web: "+accion.getParametros().get("id") + " eliminado con exito.");
         }
     }
 
@@ -106,7 +104,6 @@ public class Actor {
         pagina.setLastMOdUser(atributos.getOrDefault("userMod",userID));
         pagina.setEtiquetas(Objects.requireNonNullElseGet(accion.getetiquetasList(), ArrayList::new));
         manejador.addPagina(db,pagina,atributos.get("sitioPar"),respuesta, userID);
-        respuesta.addExito("Pagina web: "+pagina.getID() + " creada con exito.");
     }
 
     public void eliminarPagina(DB db, Accion accion, Respuesta respuesta) throws FileNotFoundException {
@@ -115,7 +112,7 @@ public class Actor {
             throw new FileNotFoundException();
         } else {
             manejador.deletePagina(db,accion.getParametros().get("id"),respuesta);
-            respuesta.addExito("Pagina: "+accion.getParametros().get("id") + " eliminada con exito.");
+
         }
     }
 
@@ -144,7 +141,7 @@ public class Actor {
     private void agregarComponente(DB proxDB, Accion accion, Respuesta respuesta, String idUSer) throws FileNotFoundException {
         HashMap<String,String> parametros = accion.getParametros();
         Componente componente = accion.getAtributos();
-        Pagina pagina = manejador.buscarPagina(proxDB,parametros.get("id"));
+        Pagina pagina = manejador.buscarPagina(proxDB,parametros.get("pagina"));
         String sitio = pagina.getSiteID();
         manejador.addComponente(proxDB,componente,sitio,pagina.getID(),respuesta,idUSer);
     }
@@ -155,7 +152,7 @@ public class Actor {
             throw new FileNotFoundException();
         } else {
             manejador.deleteComponente(proxDB,accion.getParametros().get("id"),
-                    manejador.buscarPagina(proxDB,accion.getParametros().get("id")).getID(),respuesta,idUSer);
+                    manejador.buscarPagina(proxDB,accion.getParametros().get("pagina")).getID(),respuesta,idUSer);
         }
     }
 

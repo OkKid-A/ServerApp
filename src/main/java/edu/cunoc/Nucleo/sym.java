@@ -18,12 +18,12 @@ public class sym {
   public static final int OTRO = 55;
   public static final int MOD_PAG = 6;
   public static final int NOMBRE = 37;
-  public static final int ENTERO = 56;
+  public static final int ENTERO = 57;
   public static final int ANCHO = 25;
   public static final int HEXA = 53;
   public static final int IZQUIERDA = 27;
   public static final int VIDEO = 49;
-  public static final int FECHA = 57;
+  public static final int FECHA = 58;
   public static final int MENU = 46;
   public static final int MAYORQUE = 31;
   public static final int IGUAL = 32;
@@ -56,6 +56,7 @@ public class sym {
   public static final int PARRAFO = 47;
   public static final int ORIGEN = 23;
   public static final int DEL_PAG = 5;
+  public static final int MULTI = 56;
   public static final int ACCIONES = 44;
   public static final int ETIQUETAS_XML = 42;
   public static final int PARAMETRO = 41;
@@ -123,6 +124,7 @@ public class sym {
   "HEXA",
   "ID",
   "OTRO",
+  "MULTI",
   "ENTERO",
   "FECHA"
   };

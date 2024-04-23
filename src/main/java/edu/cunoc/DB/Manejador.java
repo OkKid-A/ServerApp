@@ -26,6 +26,7 @@ public class Manejador {
         } else {
             db.getSitiosDB().put(sitio.getiD(), sitio);
             sitio.setModificado(true);
+            respuesta.addExito("Sitio web: "+sitio.getiD() + " creado con exito.");
         }
     }
 
@@ -34,6 +35,7 @@ public class Manejador {
             db.getSitiosDB().remove(sitio);
             try {
                 archivadorHtml.deleteSitio(sitio,respuesta);
+                respuesta.addExito("Sitio web: "+ sitio + " eliminado con exito.");
             } catch (IOException e) {
                 throw new FileNotFoundException();
             }
@@ -64,6 +66,7 @@ public class Manejador {
             db.getSitiosDB().get(sitio).getPaginas().put(pagina.getID(),pagina);
             db.getSitiosDB().get(sitio).setModificado(true);
             db.getSitiosDB().get(sitio).setLastModUSer(userID);
+            respuesta.addExito("Pagina web: "+pagina.getID() + " creada con exito.");
         }
     }
 
@@ -73,6 +76,7 @@ public class Manejador {
             db.getSitiosDB().get(paginaOb.getSiteID()).getPaginas().remove(pagina);
             try {
                 archivadorHtml.deletePagina(paginaOb.getSiteID(),pagina,respuesta);
+                respuesta.addExito("Pagina: "+pagina + " eliminada con exito.");
             } catch (IOException e) {
                 throw new FileNotFoundException();
             }
@@ -94,6 +98,7 @@ public class Manejador {
                 db.getSitiosDB().get(sitio).getPaginas().get(pagina).getComponentes().add(comp);
                 db.getSitiosDB().get(sitio).setModificado(true);
                 db.getSitiosDB().get(sitio).setLastModUSer(idUser);
+                respuesta.addExito("El componente: "+comp.getNombre()+" se ha agregado con exito.");
             }
         }
     }
@@ -111,6 +116,7 @@ public class Manejador {
                 db.getSitiosDB().get(paginaOb.getSiteID()).getPaginas().get(pagina).getComponentes().remove(buscarComponente(paginaOb,comp));
                 db.getSitiosDB().get(paginaOb.getSiteID()).setModificado(true);
                 db.getSitiosDB().get(paginaOb.getSiteID()).setLastModUSer(idUser);
+                respuesta.addExito("El componente: "+comp+" se ha eliminado con exito.");
             }
         }
     }

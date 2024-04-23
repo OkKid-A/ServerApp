@@ -45,15 +45,15 @@ public class Servidor {
 
                 } else {
                     try {
-                        System.out.println(particion[1]);
+                        System.out.println("Texto recibido: " + particion[1]);
                         respuesta = procesarTexto(particion[1], userID);
                     } catch (Exception e) {
                         e.printStackTrace();
+                    } finally {
                         out.println(respuesta.getRespuesta());
                     }
                 }
-                System.out.println(respuesta.getRespuesta());
-                out.println(respuesta.getRespuesta());
+                System.out.println("Respuesta enviada: " + respuesta.getRespuesta());
                 out.close();
                 in.close();
             }
@@ -77,7 +77,12 @@ public class Servidor {
         StringReader reader = new StringReader(texto);
         CreadorWebLexer creadorWebLexer = new CreadorWebLexer(reader);
         CreadorWebParser creadorWebParser = new CreadorWebParser(creadorWebLexer);
-        creadorWebParser.parse();
+        try {
+            creadorWebParser.parse();
+        } catch (Exception e){
+            e.printStackTrace();
+            return creadorWebParser.getRespuesta();
+        }
         Nucleo nucleo = creadorWebParser.getNucleo();
         Respuesta respuesta = creadorWebParser.getRespuesta();
         DB dbPrevia = lectorDB.readBinDB(respuesta);
@@ -88,8 +93,7 @@ public class Servidor {
         try {
             db = actor.correrAcciones(db, nucleo.getAcciones(), respuesta, userID);
             if (!respuesta.isErronea()) {
-                creadorWeb.buildHtml(db, respuesta);
-
+                db = creadorWeb.buildHtml(db, respuesta);
             }
             if (respuesta.isErronea()) {
                 creadorWeb.buildHtml(dbPrevia, respuesta);
@@ -99,8 +103,8 @@ public class Servidor {
         } catch (NullPointerException e){
             e.printStackTrace();
             if (lectorDB.readBinDB(respuesta)!=null){
-                escritorDB.guardarDB(dbPrevia);
                 creadorWeb.buildHtml(lectorDB.readBinDB(respuesta), respuesta);
+                escritorDB.guardarDB(dbPrevia);
             }
 
         }

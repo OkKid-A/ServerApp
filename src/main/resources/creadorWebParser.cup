@@ -12,7 +12,11 @@ parser code {:
 
     public CreadorWebParser(CreadorWebLexer lex){
         super(lex);
-        this.respuesta = new Respuesta();
+        if (lex.getRespuesta()!=null) {
+                    this.respuesta = lex.getRespuesta();
+                } else {
+                    respuesta = new Respuesta();
+                }
     }
 
     private Nucleo nucleo = new Nucleo();
@@ -31,11 +35,11 @@ parser code {:
                         String posibleLex = "";
                         if (cur_token.value != null){
                             System.out.println("Lexema: "+cur_token.value);
-                            posibleLex = "Lexema: "+(String) cur_token.value;
+                            posibleLex = " Lexema: "+(String) cur_token.value;
                         }
-                        respuesta.addErrorSintactico("Error sintactico al encontrar el simbolo:" + symbl_name_from_id(cur_token.sym)+"Linea " +
-                                cur_token.left+", Columna " + cur_token.right+posibleLex);
-                        if (expected_token_ids().isEmpty()) {
+
+                        if (expected_token_ids().isEmpty()) {respuesta.addErrorSintactico("Error sintactico al encontrar el simbolo: " + symbl_name_from_id(cur_token.sym)+" Linea " +
+                                                                                             cur_token.left+", Columna " + cur_token.right+posibleLex + ". Ya no se esperaba ningun simbolo.") ;
                             System.out.println("ya no se esperaba ningun simbolo");
                         } else {
                         List<Integer> ids = this.expected_token_ids();
@@ -60,7 +64,7 @@ parser code {:
                         ORIGEN, ALTURA, ANCHO, CENTRAR, IZQUIERDA, DERECHA, JUSTIFICAR, MENOSQUE, MAYORQUE,
                         IGUAL ,DIAGONAL ,COR_OP, COR_CLO, ACCION, NOMBRE, ATRIBUTOS, ATRIBUTO, PARAMETROS, PARAMETRO,
                         ETIQUETAS_XML, ETIQUETA, ACCIONES, COMILLA, MENU, PARRAFO, IMAGEN, VIDEO, BARRA, VALOR, TITULO_CLASS;
-    terminal String     HEXA, ID, OTRO;
+    terminal String     HEXA, ID, OTRO, MULTI;
     terminal Integer    ENTERO;
     terminal String       FECHA;
 
@@ -179,14 +183,14 @@ parser code {:
                         ;
 
     agregarComp ::= ADD_COMP COMILLA MAYORQUE parasTop idPar:i idPagina:p  atributos:t {: Accion a = new Accion(TipoAccion.AGREGAR_COMP);
-                    a.addParametro("id",i); a.setAtributos(t); RESULT = a; :}
+                    a.addParametro("id",i); a.addParametro("pagina",p); t.setNombre(i); a.setAtributos(t); RESULT = a; :}
                     ;
 
     eliminarComp ::= DEL_COMP COMILLA MAYORQUE parasTop idPar:i idPagina:p {: Accion a = new Accion(TipoAccion.ELIMINAR_COMP); a.addParametro("id",i); a.addParametro("pagina",p); RESULT = a;:}
                     ;
 
     modificarComp ::= MOD_COMP COMILLA MAYORQUE parasTop idPar:i idPagina:p  atributos:t {: Accion a = new Accion(TipoAccion.MODIFICAR_COMP);
-                                                                                       a.addParametro("id",i); a.setAtributos(t); RESULT = a; :}
+                                                                                       a.addParametro("id",i); t.setNombre(i);a.setAtributos(t); RESULT = a; :}
                    ;
 
     atributos ::= paraTop CLASE COMILLA MAYORQUE COR_OP tipoAtributos:t {: RESULT = t; :}
@@ -333,6 +337,8 @@ parser code {:
              ;
 
     stringGet ::=  COR_OP otro:i COR_CLO                                   {: RESULT = i; :}
+                | OTRO:i                                 {: RESULT = i; :}
+                | MULTI:i                                 {: RESULT = i; :}
                  ;
 
     intGet ::= COR_OP ENTERO:i COR_CLO                      {: RESULT = i; :}
@@ -356,7 +362,6 @@ parser code {:
            | FECHA:i                                 {: RESULT = i; :}
            | ENTERO:i                                   {: RESULT = String.valueOf(i); :}
            | HEXA:i                                   {: RESULT = i; :}
-           | OTRO:i                                 {: RESULT = i; :}
            | ACCION                                      {: RESULT = "ACCION"; :}
            | ACCIONES                                    {: RESULT = "ACCIONES"; :}
            | NOMBRE                                        {: RESULT = "NOMBRE"; :}
@@ -368,8 +373,9 @@ parser code {:
            | ETIQUETA                                   {: RESULT = "ETIQUETA"; :}
            |IMAGEN                                      {: RESULT = "IMAGEN"; :}
            |VIDEO                                   {: RESULT = "VIDEO"; :}
-           | PARRAFO                                    {: RESULT = "PARRAFO"; :}
-           | TITULO_CLASS                                   {: RESULT = "TITULO_CLASS"; :}
+           | PARRAFO                                    {: RESULT = "Parrafo"; :}
+           | TITULO_CLASS                                   {: RESULT = "Titulo"; :}
            |MENU                                        {: RESULT = "MENU"; :}
+           | error COR_CLO
            ;
 

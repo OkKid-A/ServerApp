@@ -3,6 +3,7 @@ package edu.cunoc.DB;
 import edu.cunoc.Enlace.Respuesta;
 import edu.cunoc.Sitios.Pagina;
 import edu.cunoc.Sitios.Sitio;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.util.Map;
@@ -17,6 +18,15 @@ public class EscritorDB {
     }
 
     public void guardarDB(DB db){
+        LectorDB lectorDB = new LectorDB();
+        if (lectorDB.checkDB()){
+            File pageFile = new File(System.getProperty("user.dir") + File.separator + "web.bin");
+            try {
+                FileUtils.delete(pageFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         try {
             FileOutputStream outputStream = new FileOutputStream(System.getProperty("user.dir") + File.separator + "web.bin",true);
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);

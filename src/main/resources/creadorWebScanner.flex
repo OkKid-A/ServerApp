@@ -1,6 +1,6 @@
 package edu.cunoc.Nucleo;
 
-import java_cup.runtime.*;import java.util.Date;
+import edu.cunoc.Enlace.Respuesta;import java_cup.runtime.*;import java.util.Date;
 
 %%
 
@@ -12,17 +12,28 @@ import java_cup.runtime.*;import java.util.Date;
 
 %{
 
-   private Symbol symbol(int type) {
-       return new Symbol(type, yyline+1, yycolumn+1);
-   }
+    private Respuesta respuesta;
 
-    private Symbol symbol(int type, Object value) {
-        return new Symbol(type, yyline+1, yycolumn+1, value);
-    }
 
-    private void error(String message) {
-        System.out.println("Error lexico en linea "+(yyline+1)+", columna "+(yycolumn+1)+" : "+message);
-    }
+       private Symbol symbol(int type) {
+           return new Symbol(type, yyline+1, yycolumn+1);
+       }
+
+        private Symbol symbol(int type, Object value) {
+            return new Symbol(type, yyline+1, yycolumn+1, value);
+        }
+
+        private void error(String message) {
+           if (respuesta==null){
+               respuesta = new Respuesta();
+           }
+           respuesta.addErrorLexico("Error lexico en linea "+(yyline+1)+", columna "+(yycolumn+1)+" : "+message);
+            System.out.println("Error lexico en linea "+(yyline+1)+", columna "+(yycolumn+1)+" : "+message);
+        }
+
+        public Respuesta getRespuesta(){
+           return respuesta;
+        }
 %}
 
 EOL = \n|\r|\r\n
@@ -32,7 +43,10 @@ Hexadecimal = #([A-Fa-f0-9]{6})
 Decimal = {Entero}+ "." [1-9][0-9]*
 ID = (_|-|"$") (_|"$"|-|[:letter:]|[:digit:])+
 Fecha = ([0-9]{4})"-"([0-1][0-9])"-"([0-3][0-9])
-Otro = (@ | - | "+" | "*"| {Fecha}| _ | # | [:letter:] | [:digit:]  )+
+Otro =  \[({Space}*{Multi}({Space}+{Multi})+{Space}*)+\]
+Multi = \[(@ | - | & | "/" | "+" | "*"| {Fecha}| _ | # | [:letter:]+ | [:digit:]+ |:|"("|")"|".")+\]
+
+
 
 %%
 
@@ -69,8 +83,6 @@ Otro = (@ | - | "+" | "*"| {Fecha}| _ | # | [:letter:] | [:digit:]  )+
 {Entero}                        {return symbol(sym.ENTERO, new Integer(yytext()));}
 {Fecha}                         {return symbol(sym.FECHA, new String(yytext()));}
 
-
-
 "<"                    {return symbol(sym.MENOSQUE);}
 ">"                    {return symbol(sym.MAYORQUE);}
 "="                    {return symbol(sym.IGUAL);}
@@ -99,6 +111,7 @@ Otro = (@ | - | "+" | "*"| {Fecha}| _ | # | [:letter:] | [:digit:]  )+
 [vV][aA][lL][oO][rR]            {return symbol(sym.VALOR);}
 
 {Otro}                         {return symbol(sym.OTRO, new String(yytext()));}
+{Multi}                        {return symbol(sym.MULTI, new String(yytext()));}
 
  {Space}             {             }
  <<EOF>>             {return symbol(sym.EOF);}

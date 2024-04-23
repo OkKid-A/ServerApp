@@ -338,7 +338,6 @@ parser code {:
 
     stringGet ::=  COR_OP otro:i COR_CLO                                   {: RESULT = i; :}
                 | OTRO:i                                 {: RESULT = i; :}
-                | MULTI:i                                 {: RESULT = i; :}
                  ;
 
     intGet ::= COR_OP ENTERO:i COR_CLO                      {: RESULT = i; :}
@@ -376,6 +375,7 @@ parser code {:
            | PARRAFO                                    {: RESULT = "Parrafo"; :}
            | TITULO_CLASS                                   {: RESULT = "Titulo"; :}
            |MENU                                        {: RESULT = "MENU"; :}
+           | MULTI:i                                      {: RESULT = i; :}
            | error COR_CLO
            ;
 
